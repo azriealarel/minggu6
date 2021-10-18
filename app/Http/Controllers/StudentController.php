@@ -38,7 +38,6 @@ class StudentController extends Controller
     {
         //add data
         Student::create($request->all());
-
         // if true, redirect to index
         return redirect()->route('students.index')
             ->with('success', 'Add data success!');
@@ -65,6 +64,7 @@ class StudentController extends Controller
     {
         $student = Student::find($id);
         return view('students.edit',['student'=>$student]);
+
     }
 
     /**
@@ -94,6 +94,8 @@ class StudentController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $student = Student::find($id);
+        $student->delete();
+        return redirect()->route('students.index');
     }
 }

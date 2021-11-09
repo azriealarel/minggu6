@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Kelas;
+use PDF;
+
 
 class StudentController extends Controller
 {
@@ -40,17 +42,24 @@ class StudentController extends Controller
     {
         $student = new Student;
 
+        if($request->file('photo')){
+        $image_name = $request->file('photo')->store('images','public');
+        }
+       
         $student->nim = $request->nim;
         $student->name = $request->name;
         $student->department = $request->department;
         $student->phone_number = $request->phone_number;
+        $student->photo = $image_name;
+
         $kelas = new Kelas;
         $kelas->id = $request->Kelas;
+
         $student->kelas()->associate($kelas);
         $student->save();
 
-        // if true, redirect to index
-        return redirect()->route('students.index')->with('success', 'Add data success!');
+        return redirect()->route('students.index')
+        ->with('success', 'Add data success!');
     }
 
     /**
@@ -87,16 +96,22 @@ class StudentController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $student = Student::find($id);
-        $student->nim = $request->nim;
-        $student->name = $request->name;
-        $student->department = $request->department;
-        $student->phone_number = $request->phone_number;
-        $kelas = new Kelas;
-        $kelas->id = $request->Kelas;
-        $student->kelas()->associate($kelas);
-        $student->save();
-        return redirect()->route('students.index');
+            $student = Student::find($id);
+            $student->nim = $request->nim;
+            $student->name = $request->name;
+            $student->department = $request->department;
+            $student->phone_number = $request->phone_number;
+
+            if($student->photo && file_exists(storage_path('app/public/' . $student->photo))) { 
+                \Storage::delete('public/'.$student->photo); 
+            } 
+            $image_name = $request->file('photo')->store('images', 'public'); $student->photo = $image_name;
+
+            $kelas = new Kelas;
+            $kelas->id = $request->Kelas;
+            $student->kelas()->associate($kelas);
+            $student->save();
+            return redirect()->route('students.index');
     }
 
     /**
@@ -117,5 +132,17 @@ class StudentController extends Controller
         $keyword = $request->search;
         $user = User::where('name', 'like', "%" . $keyword . "%")->paginate(5);
         return view('users.index', compact('user'))->with('i', (request()->input('page', 1) - 1) * 5);
+    }
+
+    public function detail($id)
+    {
+        $student = Student::find($id);
+        return view('students.detail',['student'=>$student]);
+    }
+
+    public function report($id){
+        $student = Student::find($id);
+        $pdf = PDF::loadview('students.report',['student'=>$student]);
+        return $pdf->stream();
     }
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+
 
 class UserController extends Controller
 {
@@ -12,6 +14,15 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function __construct()
+    {
+        //$this->middleware('auth');
+        $this->middleware(function($request, $next){
+            if(Gate::allows('manage-users')) return $next($request);
+            abort(403, 'Anda tidak memiliki cukup hak akses');
+        });
+    }
+
     public function index()
     {
         $users = User::all();
@@ -37,10 +48,10 @@ class UserController extends Controller
     public function store(Request $request)
     {
         //add data
-        user::create($request->all());
+        User::create($request->all());
         // if true, redirect to index
         return redirect()->route('users.index')
-            ->with('success', 'Add data success!');
+        ->with('success', 'Add data success!');
     }
 
     /**
@@ -52,7 +63,7 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::find($id);
-        return view('users.show',['user'=>$user]);        
+        return view('users.show',['user'=>$user]);
     }
 
     /**
@@ -65,7 +76,6 @@ class UserController extends Controller
     {
         $user = User::find($id);
         return view('users.edit',['user'=>$user]);
-
     }
 
     /**
@@ -77,13 +87,12 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $student = user::find($id);
-        $student->nim = $request->nim;
-        $student->name = $request->name;
-        $student->class = $request->class;
-        $student->department = $request->department;
-        $student->phone_number = $request->phone_number;
-        $student->save();
+        $user = User::find($id);
+        $user->name = $request->name;
+        $user->username = $request->username;
+        $user->password = $request->password;
+        $user->email = $request->email;
+        $user->save();
         return redirect()->route('users.index');
     }
 
@@ -98,5 +107,12 @@ class UserController extends Controller
         $user = User::find($id);
         $user->delete();
         return redirect()->route('users.index');
+    }
+
+    public function search(Request $request)
+    {
+        $keyword = $request->search;
+        $user = User::where('name', 'like', "%" . $keyword . "%")->paginate(5);
+        return view('users.index', compact('user'))->with('i', (request()->input('page', 1) - 1) * 5);
     }
 }

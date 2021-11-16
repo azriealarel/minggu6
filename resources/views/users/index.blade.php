@@ -13,6 +13,7 @@
                             </div> 
                         @endif 
 
+                        <form class="form" method="get" action="{{ route('search') }}">
                             <div class="form-group w-100 mb-3">
                                 <input type="text" name="search" class="form-control w-75 d-inline" id="search" placeholder="search...">
                                 <button type="submit" class="btn btn-primary mb-1">Search</button>
@@ -36,7 +37,8 @@
                                     <td>{{ $s->id }}</td> 
                                     <td>{{ $s->name }}</td> 
                                     <td>{{ $s->username }}</td> 
-                                    <td>{{ $s->email }}</td> 
+                                    <td>{{ $s->email }}</td>
+                                    <td>{{ $s->role }}</td> 
                                     <td>
                                         <form action="/users/{{$s->id}}" method="post">
                                             <a href="/users/{{$s->id}}/edit" class="btn btn-warning">Edit</a>
